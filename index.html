@@ -474,7 +474,7 @@ function showStats(){
 }
  
 // Laad img URL op uit localStorage cache
-const CACHE_VERSION='v5';
+const CACHE_VERSION='v6';
 function loadImgCache(){
   try{
     const v=localStorage.getItem('pkm_img_cache_ver');
@@ -490,16 +490,28 @@ function saveImgCache(){
  
 async function preloadImages(){
   const todo=CARDS_DATA.filter(c=>c.api_id&&c.api_id!=='geen'&&!IMG_CACHE[c.nr]);
-  const BATCH=8;
+  if(!todo.length){return;}
+  // Laad in batches van 20 via 1 API call per batch (q=id:x OR id:y...)
+  const BATCH=20;
   for(let i=0;i<todo.length;i+=BATCH){
-    await Promise.all(todo.slice(i,i+BATCH).map(async c=>{
-      try{
-        const r=await fetch('https://api.pokemontcg.io/v2/cards/'+c.api_id);
-        const d=await r.json();
-        if(d&&d.data&&d.data.images) IMG_CACHE[c.nr]=d.data.images.large||d.data.images.small;
-      }catch(e){}
-    }));
-    await new Promise(r=>setTimeout(r,150));
+    const batch=todo.slice(i,i+BATCH);
+    const q=batch.map(c=>'id:'+c.api_id).join(' OR ');
+    try{
+      const r=await fetch('https://api.pokemontcg.io/v2/cards?q='+encodeURIComponent(q)+'&pageSize='+BATCH+'&select=id,images');
+      const d=await r.json();
+      if(d&&d.data){
+        d.data.forEach(card=>{
+          // Vind het kaart nummer op basis van api_id
+          const c=CARDS_DATA.find(x=>x.api_id===card.id);
+          if(c&&card.images) IMG_CACHE[c.nr]=card.images.large||card.images.small;
+          // Sommige kaarten hebben hetzelfde api_id (duplicaten)
+          CARDS_DATA.filter(x=>x.api_id===card.id).forEach(x=>{
+            if(card.images) IMG_CACHE[x.nr]=card.images.large||card.images.small;
+          });
+        });
+      }
+    }catch(e){}
+    if(i+BATCH<todo.length) await new Promise(r=>setTimeout(r,200));
   }
   saveImgCache();
 }
