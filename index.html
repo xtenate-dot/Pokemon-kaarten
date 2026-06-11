@@ -364,53 +364,84 @@ function showDetail(nr){
   loadCardImage(c);
 }
  
+// Naam mapping voor namen die afwijken van de API
+const NAME_MAP={
+  'Salamance':'Salamence',
+  'Ho-oH':'Ho-Oh',
+  'Lucario X':'Lucario LV.X',
+  'Palkia X':'Palkia LV.X',
+  'Empoleon X':'Empoleon LV.X',
+  'M Charizard EX':'M Charizard-EX',
+  'M Latios EX':'M Latios-EX',
+  'Delcatty EX':'Delcatty ex',
+  'Typhlosion EX':'Typhlosion ex',
+  'Mewtwo EX':'Mewtwo ex',
+  'Groudon EX':'Groudon ex',
+  'Greninja Gold star':'Greninja',
+  'Reshiram & Charizard':'Reshiram & Charizard-GX',
+  'Charizard Vmax':'Charizard VMAX',
+  'Leafeon Vmax':'Leafeon VMAX',
+  'Blaine's Charmander':'Blaine's Charmander',
+  'Misty's Tentacruel':'Misty's Tentacruel',
+};
+ 
+async function apiSearch(q, pageSize){
+  const r=await fetch('https://api.pokemontcg.io/v2/cards?q='+encodeURIComponent(q)+'&pageSize='+(pageSize||5));
+  const d=await r.json();
+  return (d&&d.data)?d.data:[];
+}
+ 
 async function loadCardImage(c){
   const wrap=document.querySelector('.card-img-wrap');
   if(!wrap)return;
-  // Gebruik cache
   if(IMG_CACHE[c.nr]){displayImg(wrap,IMG_CACHE[c.nr],c.naam);return;}
   wrap.innerHTML='<div class="card-img-placeholder">Laden...</div>';
+ 
   const num=c.kaartnummer.split('/')[0];
   const isPromo=c.set==='Promo';
   const setApi=SET_NAME_MAP[c.set]||c.set;
-  // Naam opschonen voor API
-  const apiNaam=c.naam
-    .replace(/Salamance/gi,'Salamence')
-    .replace(/Ho-oH/gi,'Ho-Oh')
-    .replace(/\s*&\s*/g,' ')
-    .trim();
+  const apiNaam=NAME_MAP[c.naam]||c.naam;
+ 
   try{
-    let card=null, data;
+    let card=null, results=[];
+ 
     if(isPromo){
-      // Promo: zoek op naam + nummer
-      const q='name:"'+apiNaam+'" number:'+num;
-      const r=await fetch('https://api.pokemontcg.io/v2/cards?q='+encodeURIComponent(q)+'&pageSize=5');
-      data=await r.json();
-      if(data.data&&data.data.length>0){card=data.data[0];}
-      // Fallback: alleen op naam zoeken
+      // Stap 1: naam + nummer exact
+      results=await apiSearch('name:"'+apiNaam+'" number:'+num);
+      card=results[0]||null;
+      // Stap 2: alleen nummer (promos hebben unieke nummers)
       if(!card){
-        const r2=await fetch('https://api.pokemontcg.io/v2/cards?q='+encodeURIComponent('name:"'+apiNaam+'"')+'&pageSize=20');
-        data=await r2.json();
-        if(data.data&&data.data.length>0){
-          card=data.data.find(d=>d.number===num)||data.data[0];
-        }
+        results=await apiSearch('number:'+num+' supertype:Pokémon',10);
+        const cleanN=apiNaam.toLowerCase();
+        card=results.find(d=>d.name.toLowerCase()===cleanN)
+          ||results.find(d=>d.name.toLowerCase().includes(apiNaam.split(' ')[0].toLowerCase()))
+          ||results[0]||null;
       }
     } else {
-      // Normale kaart: nummer + setnaam (meest precies)
-      const q='number:'+num+' set.name:"'+setApi+'"';
-      const r=await fetch('https://api.pokemontcg.io/v2/cards?q='+encodeURIComponent(q)+'&pageSize=5');
-      data=await r.json();
-      if(data.data&&data.data.length>0){card=data.data[0];}
+      // Stap 1: nummer + set exact
+      results=await apiSearch('number:'+num+' set.name:"'+setApi+'"');
+      card=results[0]||null;
+      // Stap 2: nummer + naam (als set niet matcht)
+      if(!card){
+        results=await apiSearch('number:'+num+' name:"'+apiNaam+'"',10);
+        card=results[0]||null;
+      }
+      // Stap 3: alleen naam + set
+      if(!card){
+        results=await apiSearch('name:"'+apiNaam+'" set.name:"'+setApi+'"',10);
+        card=results.find(d=>d.number===num)||results[0]||null;
+      }
     }
+ 
     if(card&&card.images){
       const url=card.images.large||card.images.small;
       IMG_CACHE[c.nr]=url;
       displayImg(wrap,url,c.naam);
     } else {
-      wrap.innerHTML='<div class="card-img-placeholder">Geen afbeelding gevonden</div>';
+      wrap.innerHTML='<div class="card-img-placeholder" style="font-size:11px;color:#555;padding:10px;text-align:center">Geen afbeelding<br><span style="font-size:10px">#'+c.nr+' '+c.naam+'</span></div>';
     }
   } catch(e){
-    wrap.innerHTML='<div class="card-img-placeholder">Geen afbeelding gevonden</div>';
+    wrap.innerHTML='<div class="card-img-placeholder">Fout bij laden</div>';
   }
 }
  
