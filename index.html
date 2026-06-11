@@ -220,6 +220,32 @@ const SET_NAME_MAP={
   'Slver Tempest':'Silver Tempest','Silver Tempest':'Silver Tempest'
 };
  
+// Directe kaart-IDs voor kaarten waarbij de API-zoekopdracht niet werkt
+// Format: kaartnr -> pokemontcg.io card ID
+const DIRECT_ID_MAP={
+  1:'ex11-14',   // Salamence Delta Species
+  3:'ex13-15',   // Raichu Holon Phantoms
+  7:'si1-11',    // Marill Southern Islands
+  19:'ex7-1',    // Blaziken Emerald
+  23:'base3-10', // Lapras Fossil
+  28:'dp1-120',  // Empoleon X (LV.X)
+  29:'ex1-101',  // Mewtwo EX Ruby & Sapphire
+  30:'base1-6',  // Gyarados Base Set
+  33:'ex8-110',  // Typhlosion EX Unseen Forces
+  35:'me3-94',   // Clefairy Perfect Order
+  37:'base5-28', // Dark Magneton Team Rocket
+  38:'me2-98',   // Piplup Phantasmal Flames
+  44:'gym2-60',
+  45:'gym1-10',
+  52:'ex12-91',  // Delcatty EX Crystal Guardians
+  55:'ex15-60',  // Ralts Dragon Frontiers
+  56:'ex12-19',  // Grovyle Crystal Guardians
+  57:'g1-RC5',   // Charizard Generations
+  62:'pl4-SH11', // Ponyta Shiny Arceus
+  71:'base3-50', // Kabuto Fossil
+  72:'neo1-15',  // Steelix Neo Genesis
+};
+ 
 let cards=[], currentNr=null, editOpen=false, listScrollY=0;
 const IMG_CACHE={};
  
@@ -381,8 +407,8 @@ const NAME_MAP={
   'Reshiram & Charizard':'Reshiram & Charizard-GX',
   'Charizard Vmax':'Charizard VMAX',
   'Leafeon Vmax':'Leafeon VMAX',
-  'Blaine's Charmander':'Blaine's Charmander',
-  'Misty's Tentacruel':'Misty's Tentacruel',
+  "Blaine's Charmander":"Blaine's Charmander",
+  "Misty's Tentacruel":"Misty's Tentacruel",
 };
  
 async function apiSearch(q, pageSize){
@@ -402,33 +428,54 @@ async function loadCardImage(c){
   const setApi=SET_NAME_MAP[c.set]||c.set;
   const apiNaam=NAME_MAP[c.naam]||c.naam;
  
+  const debugInfo=[];
   try{
     let card=null, results=[];
  
+    // Check directe ID eerst
+    if(DIRECT_ID_MAP[c.nr]){
+      const r=await fetch('https://api.pokemontcg.io/v2/cards/'+DIRECT_ID_MAP[c.nr]);
+      const d=await r.json();
+      if(d&&d.data&&d.data.images){
+        const url=d.data.images.large||d.data.images.small;
+        IMG_CACHE[c.nr]=url;
+        displayImg(wrap,url,c.naam);
+        return;
+      }
+    }
+ 
     if(isPromo){
-      // Stap 1: naam + nummer exact
-      results=await apiSearch('name:"'+apiNaam+'" number:'+num);
+      const q1='name:"'+apiNaam+'" number:'+num;
+      debugInfo.push('P1: '+q1);
+      results=await apiSearch(q1);
       card=results[0]||null;
-      // Stap 2: alleen nummer (promos hebben unieke nummers)
       if(!card){
-        results=await apiSearch('number:'+num+' supertype:Pokémon',10);
+        const q2='number:'+num+' supertype:Pokémon';
+        debugInfo.push('P2: '+q2+' -> '+results.length+' resultaten: '+results.map(d=>d.name+'('+d.number+')').join(', '));
+        results=await apiSearch(q2,10);
         const cleanN=apiNaam.toLowerCase();
         card=results.find(d=>d.name.toLowerCase()===cleanN)
           ||results.find(d=>d.name.toLowerCase().includes(apiNaam.split(' ')[0].toLowerCase()))
           ||results[0]||null;
       }
     } else {
-      // Stap 1: nummer + set exact
-      results=await apiSearch('number:'+num+' set.name:"'+setApi+'"');
+      const q1='number:'+num+' set.name:"'+setApi+'"';
+      debugInfo.push('S1: '+q1);
+      results=await apiSearch(q1);
+      debugInfo.push('-> '+results.length+' resultaten: '+results.map(d=>d.name+'('+d.number+','+d.set.name+')').join(', '));
       card=results[0]||null;
-      // Stap 2: nummer + naam (als set niet matcht)
       if(!card){
-        results=await apiSearch('number:'+num+' name:"'+apiNaam+'"',10);
+        const q2='number:'+num+' name:"'+apiNaam+'"';
+        debugInfo.push('S2: '+q2);
+        results=await apiSearch(q2,10);
+        debugInfo.push('-> '+results.length+' resultaten: '+results.map(d=>d.name+'('+d.set.name+')').join(', '));
         card=results[0]||null;
       }
-      // Stap 3: alleen naam + set
       if(!card){
-        results=await apiSearch('name:"'+apiNaam+'" set.name:"'+setApi+'"',10);
+        const q3='name:"'+apiNaam+'" set.name:"'+setApi+'"';
+        debugInfo.push('S3: '+q3);
+        results=await apiSearch(q3,10);
+        debugInfo.push('-> '+results.length+' resultaten');
         card=results.find(d=>d.number===num)||results[0]||null;
       }
     }
@@ -436,12 +483,13 @@ async function loadCardImage(c){
     if(card&&card.images){
       const url=card.images.large||card.images.small;
       IMG_CACHE[c.nr]=url;
+      debugInfo.push('Gevonden: '+card.name+' ('+card.id+')');
       displayImg(wrap,url,c.naam);
     } else {
-      wrap.innerHTML='<div class="card-img-placeholder" style="font-size:11px;color:#555;padding:10px;text-align:center">Geen afbeelding<br><span style="font-size:10px">#'+c.nr+' '+c.naam+'</span></div>';
+      wrap.innerHTML='<div class="card-img-placeholder" style="font-size:10px;color:#666;padding:8px;text-align:left;overflow:auto;max-height:220px">'+debugInfo.map(l=>'<div>'+l+'</div>').join('')+ '<div style="color:#f07070;margin-top:4px">Geen kaart gevonden</div></div>';
     }
   } catch(e){
-    wrap.innerHTML='<div class="card-img-placeholder">Fout bij laden</div>';
+    wrap.innerHTML='<div class="card-img-placeholder" style="font-size:10px;color:#f07070;padding:8px">Fout: '+e.message+'<br>'+debugInfo.join('<br>')+'</div>';
   }
 }
  
@@ -451,7 +499,7 @@ function displayImg(wrap,url,naam){
   img.src=url;
   img.alt=naam;
   img.onload=()=>{wrap.innerHTML='';wrap.appendChild(img);};
-  img.onerror=()=>{wrap.innerHTML='<div class="card-img-placeholder">Geen afbeelding gevonden</div>';};
+  img.onerror=()=>{wrap.innerHTML='<div class="card-img-placeholder">Afbeelding URL ongeldig:<br><span style="font-size:10px;word-break:break-all">'+url+'</span></div>';};
 }
  
 function toggleEdit(){
