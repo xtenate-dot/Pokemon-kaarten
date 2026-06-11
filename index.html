@@ -289,7 +289,7 @@ function cardHTML(c,valKey,rank){
 }
  
 const CARD_ID_MAP={
-  1:"ex13-14",2:"swshp-SWSH260",3:"ex14-15",4:"swsh7-205",5:"swsh6-177",
+  1:"ex11-14",2:"swshp-SWSH260",3:"ex13-15",4:"swsh7-205",5:"swsh6-177",
   6:"np-34",7:"si1-11",8:"dpp-DP12",9:"dpp-DP12",10:"sv1-205",
   11:"swshp-SWSH284",12:"swsh9-TG05",13:"smp-SM208",14:"sv6-186",15:"np-6",
   16:"dp3-19",17:"pl2-8",18:"dp2-8",19:"ex7-1",20:"sv6-187",
@@ -314,20 +314,28 @@ function loadCardImage(c){
   wrap.innerHTML='<div class="card-img-placeholder">Laden…</div>';
   const cardId=CARD_ID_MAP[c.nr];
   if(!cardId){wrap.innerHTML='<div class="card-img-placeholder">Geen afbeelding</div>';return;}
-  fetch('https://api.pokemontcg.io/v2/cards/'+cardId)
-    .then(r=>r.json())
-    .then(data=>{
-      const imgUrl=data&&data.data&&data.data.images?(data.data.images.large||data.data.images.small):null;
-      if(!imgUrl){wrap.innerHTML='<div class="card-img-placeholder">Geen afbeelding gevonden</div>';return;}
-      const img=document.createElement('img');
-      img.className='card-img';
-      img.src=imgUrl;
-      img.alt=c.naam;
-      img.onload=()=>{wrap.innerHTML='';wrap.appendChild(img);};
-      img.onerror=()=>{wrap.innerHTML='<div class="card-img-placeholder">Geen afbeelding gevonden</div>';};
-    })
-    .catch(()=>{wrap.innerHTML='<div class="card-img-placeholder">Geen afbeelding gevonden</div>';});
+  // Gebruik pokemoncard.io CDN die hotlinking toestaat
+  const [setId,num]=cardId.split('-').reduce((a,v,i)=>i===0?[v,'']:[a[0],a[1]+(a[1]?'-':'')+v],['','']);
+  const imgUrl='https://images.pokemoncard.io/images/'+setId+'/'+cardId+'_hiresopt.jpg';
+  const img=document.createElement('img');
+  img.className='card-img';
+  img.src=imgUrl;
+  img.alt=c.naam;
+  img.onload=()=>{wrap.innerHTML='';wrap.appendChild(img);};
+  img.onerror=()=>{
+    // Fallback: probeer de API
+    fetch('https://api.pokemontcg.io/v2/cards/'+cardId)
+      .then(r=>r.json())
+      .then(data=>{
+        const url=data&&data.data&&data.data.images?(data.data.images.large||data.data.images.small):null;
+        if(url){const img2=document.createElement('img');img2.className='card-img';img2.src=url;img2.alt=c.naam;img2.onload=()=>{wrap.innerHTML='';wrap.appendChild(img2);};img2.onerror=()=>{wrap.innerHTML='<div class="card-img-placeholder">Geen afbeelding gevonden</div>';};img2.src=url;}
+        else{wrap.innerHTML='<div class="card-img-placeholder">Geen afbeelding gevonden</div>';}
+      })
+      .catch(()=>{wrap.innerHTML='<div class="card-img-placeholder">Geen afbeelding gevonden</div>';});
+  };
 }
+ 
+ 
  
 function showDetail(nr){
   currentNr=nr;editOpen=false;
