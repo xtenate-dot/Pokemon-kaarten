@@ -462,6 +462,7 @@ async function loadCardImage(c){
     if(card&&card.images){
       const url=card.images.large||card.images.small;
       IMG_CACHE[c.nr]=url;
+      saveImgCache();
       displayImg(wrap,url,c.naam);
     } else {
       wrap.innerHTML='<div class="card-img-placeholder">Geen afbeelding gevonden</div>';
@@ -517,9 +518,40 @@ function showStats(){
   showView('v-stats');
 }
  
+// Laad img URL op uit localStorage cache
+function loadImgCache(){
+  try{
+    const s=localStorage.getItem('pkm_img_cache');
+    if(s) Object.assign(IMG_CACHE,JSON.parse(s));
+  }catch(e){}
+}
+ 
+function saveImgCache(){
+  try{localStorage.setItem('pkm_img_cache',JSON.stringify(IMG_CACHE));}catch(e){}
+}
+ 
+async function preloadImages(){
+  // Laad alle directe IDs parallel in batches van 8
+  const todo=Object.entries(DIRECT_ID_MAP).filter(([nr])=>!IMG_CACHE[parseInt(nr)]);
+  const BATCH=8;
+  for(let i=0;i<todo.length;i+=BATCH){
+    await Promise.all(todo.slice(i,i+BATCH).map(async([nr,id])=>{
+      try{
+        const r=await fetch('https://api.pokemontcg.io/v2/cards/'+id);
+        const d=await r.json();
+        if(d&&d.data&&d.data.images) IMG_CACHE[parseInt(nr)]=d.data.images.large||d.data.images.small;
+      }catch(e){}
+    }));
+    await new Promise(r=>setTimeout(r,150));
+  }
+  saveImgCache();
+}
+ 
 loadCards();
+loadImgCache();
 populateSetFilter();
 applyFilters();
+setTimeout(preloadImages, 800);
 </script>
 </body>
 </html>
