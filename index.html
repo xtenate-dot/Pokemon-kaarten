@@ -523,8 +523,11 @@ function showStats(){
 }
  
 // Laad img URL op uit localStorage cache
+const CACHE_VERSION='v3';
 function loadImgCache(){
   try{
+    const v=localStorage.getItem('pkm_img_cache_ver');
+    if(v!==CACHE_VERSION){localStorage.removeItem('pkm_img_cache');localStorage.setItem('pkm_img_cache_ver',CACHE_VERSION);return;}
     const s=localStorage.getItem('pkm_img_cache');
     if(s) Object.assign(IMG_CACHE,JSON.parse(s));
   }catch(e){}
