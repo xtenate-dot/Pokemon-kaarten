@@ -314,8 +314,9 @@ function loadCardImage(c){
   wrap.innerHTML='<div class="card-img-placeholder">Laden…</div>';
   const cardId=CARD_ID_MAP[c.nr];
   if(!cardId){wrap.innerHTML='<div class="card-img-placeholder">Geen afbeelding</div>';return;}
-  // Gebruik pokemoncard.io CDN die hotlinking toestaat
-  const [setId,num]=cardId.split('-').reduce((a,v,i)=>i===0?[v,'']:[a[0],a[1]+(a[1]?'-':'')+v],['','']);
+  // setId = alles voor de laatste '-', num = na de laatste '-'
+  const lastDash=cardId.lastIndexOf('-');
+  const setId=cardId.substring(0,lastDash);
   const imgUrl='https://images.pokemoncard.io/images/'+setId+'/'+cardId+'_hiresopt.jpg';
   const img=document.createElement('img');
   img.className='card-img';
@@ -323,12 +324,11 @@ function loadCardImage(c){
   img.alt=c.naam;
   img.onload=()=>{wrap.innerHTML='';wrap.appendChild(img);};
   img.onerror=()=>{
-    // Fallback: probeer de API
     fetch('https://api.pokemontcg.io/v2/cards/'+cardId)
       .then(r=>r.json())
       .then(data=>{
         const url=data&&data.data&&data.data.images?(data.data.images.large||data.data.images.small):null;
-        if(url){const img2=document.createElement('img');img2.className='card-img';img2.src=url;img2.alt=c.naam;img2.onload=()=>{wrap.innerHTML='';wrap.appendChild(img2);};img2.onerror=()=>{wrap.innerHTML='<div class="card-img-placeholder">Geen afbeelding gevonden</div>';};img2.src=url;}
+        if(url){const img2=document.createElement('img');img2.className='card-img';img2.src=url;img2.alt=c.naam;img2.onload=()=>{wrap.innerHTML='';wrap.appendChild(img2);};img2.onerror=()=>{wrap.innerHTML='<div class="card-img-placeholder">Geen afbeelding gevonden</div>';};}
         else{wrap.innerHTML='<div class="card-img-placeholder">Geen afbeelding gevonden</div>';}
       })
       .catch(()=>{wrap.innerHTML='<div class="card-img-placeholder">Geen afbeelding gevonden</div>';});
@@ -405,7 +405,21 @@ function showStats(){
   window.scrollTo(0,0);
 }
  
-function showView(id){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById(id).classList.add('active');}
+let listScrollY=0;
+function showView(id){
+  if(id==='v-list'){
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    requestAnimationFrame(()=>window.scrollTo(0,listScrollY));
+  } else {
+    if(document.getElementById('v-list').classList.contains('active')){
+      listScrollY=window.scrollY;
+    }
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0,0);
+  }
+}
  
 loadCards();
 populateSetFilter();
