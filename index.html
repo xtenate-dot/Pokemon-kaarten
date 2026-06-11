@@ -273,6 +273,10 @@ function cardHTML(c,valKey,rank){
   const mgLabel=c.mygrade!=null?`<span class="badge bg-blue">Mijn ${c.mygrade}</span>`:'';
   const showVal=valKey&&c[valKey]!=null;
   const rankLabel=rank!=null?`<span class="rank-num">#${rank} </span>`:'';
+  // PSA waarde op basis van holodex grade
+  const hdxKey=psaKey(c.holodex);
+  const hdxPsaVal=(hdxKey&&hdxKey!=='raw'&&c[hdxKey]!=null)?c[hdxKey]:null;
+  const hdxPsaLabel=hdxKey&&hdxKey!=='raw'?SORT_LABELS[hdxKey]:'';
   return`<div class="card-item" onclick="showDetail(${c.nr})">
     <div class="card-row">
       <div class="card-left">
@@ -282,6 +286,7 @@ function cardHTML(c,valKey,rank){
       <div class="card-right">
         ${showVal?`<div class="card-val-label">${SORT_LABELS[valKey]}</div>`:''}
         <div class="card-main-val">${showVal?fmt(c[valKey]):fmt(c.raw)}</div>
+        ${!showVal&&hdxPsaVal!=null?`<div style="font-size:12px;color:#a0c4ff;margin-top:2px">${hdxPsaLabel} ${fmt(hdxPsaVal)}</div>`:''}
         <div class="badges"><span class="badge ${gc(c.holodex)}">${c.holodex!=null?'HDX '+c.holodex:'—'}</span>${mgLabel}</div>
       </div>
     </div>
