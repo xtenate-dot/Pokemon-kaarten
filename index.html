@@ -235,8 +235,8 @@ const DIRECT_ID_MAP={
   46:'xy12-11',47:'xy12-11',48:'swshp-SWSH261',49:'swshp-SWSH261',50:'swshp-SWSH262',
   51:'smp-SM247',52:'ex12-91',53:'xy6-59',54:'dp1-10',55:'ex15-60',
   56:'ex12-19',57:'g1-RC5',58:'swshp-SWSH286',59:'cel25-SWSH144',60:'cel25-SWSH144',
-  61:'cel25-SWSH144',62:'pl4-SH11',63:'np-1',64:'np-1',65:'np-1',
-  66:'np-1',67:'np-1',68:'np-1',69:'np-1',70:'cel25c-24',
+  61:'cel25-SWSH144',62:'pl4-SH11',63:'basep-1',64:'basep-1',65:'basep-1',
+  66:'basep-1',67:'basep-1',68:'basep-1',69:'basep-1',70:'cel25c-24',
   71:'base3-50',72:'neo1-15',73:'cel25c-24',74:'smp-SM108',75:'xy12-53',
   76:'xy12-53',77:'dp1-31',78:'swsh9-TG11',79:'swsh11-138',80:'xy2-13',
   81:'dp3-10',82:'swsh12pt5-GG40'
@@ -418,8 +418,8 @@ async function loadCardImage(c){
   if(!wrap)return;
   if(IMG_CACHE[c.nr]){displayImg(wrap,IMG_CACHE[c.nr],c.naam);return;}
   wrap.innerHTML='<div class="card-img-placeholder">Laden...</div>';
-  
-  // Stap 1: gebruik directe ID als die bekend is
+ 
+  // Stap 1: directe ID voor geverifieerde kaarten
   if(DIRECT_ID_MAP[c.nr]){
     try{
       const r=await fetch('https://api.pokemontcg.io/v2/cards/'+DIRECT_ID_MAP[c.nr]);
@@ -433,73 +433,41 @@ async function loadCardImage(c){
     }catch(e){}
   }
  
+  // Stap 2: zoek op naam + nummer (zoals handmatig op pokemoncard.io)
   const num=c.kaartnummer.split('/')[0];
-  const isPromo=c.set==='Promo';
-  const setApi=SET_NAME_MAP[c.set]||c.set;
   const apiNaam=NAME_MAP[c.naam]||c.naam;
- 
-  const debugInfo=[];
+  const setLower=c.set.toLowerCase();
   try{
-    let card=null, results=[];
+    let card=null;
+    // Zoek naam + nummer - dit geeft meestal 1-3 resultaten
+    let results=await apiSearch('name:"'+apiNaam+'" number:'+num, 10);
+    if(results.length===1){
+      // Maar 1 resultaat - direct goed
+      card=results[0];
+    } else if(results.length>1){
+      // Meerdere: kies op basis van setnaam overeenkomst
+      const setWords=setLower.split(' ').filter(w=>w.length>3);
+      card=results.find(d=>d.set&&setWords.some(w=>d.set.name.toLowerCase().includes(w)))
+        ||results.find(d=>d.set&&d.set.name.toLowerCase().includes(setLower.split(' ')[0]))
+        ||results[0];
+    }
  
-    if(isPromo){
-      const q1='name:"'+apiNaam+'" number:'+num;
-      debugInfo.push('P1: '+q1);
-      results=await apiSearch(q1);
-      card=results[0]||null;
-      if(!card){
-        const q2='number:'+num+' supertype:Pokémon';
-        debugInfo.push('P2: '+q2+' -> '+results.length+' resultaten: '+results.map(d=>d.name+'('+d.number+')').join(', '));
-        results=await apiSearch(q2,10);
-        const cleanN=apiNaam.toLowerCase();
-        card=results.find(d=>d.name.toLowerCase()===cleanN)
-          ||results.find(d=>d.name.toLowerCase().includes(apiNaam.split(' ')[0].toLowerCase()))
-          ||results[0]||null;
-      }
-    } else {
-      const q1='number:'+num+' set.name:"'+setApi+'"';
-      debugInfo.push('S1: '+q1);
-      results=await apiSearch(q1);
-      debugInfo.push('-> '+results.length+' resultaten: '+results.map(d=>d.name+'('+d.number+','+d.set.name+')').join(', '));
-      card=results[0]||null;
-      if(!card){
-        const q2='number:'+num+' name:"'+apiNaam+'"';
-        debugInfo.push('S2: '+q2);
-        results=await apiSearch(q2,10);
-        debugInfo.push('-> '+results.length+' resultaten: '+results.map(d=>d.name+'('+d.set.name+')').join(', '));
-        card=results[0]||null;
-      }
-      if(!card){
-        const q3='name:"'+apiNaam+'" set.name:"'+setApi+'"';
-        debugInfo.push('S3: '+q3);
-        results=await apiSearch(q3,10);
-        debugInfo.push('-> '+results.length+' resultaten');
-        card=results.find(d=>d.number===num)||results[0]||null;
-      }
+    // Stap 3: naam + setnaam als fallback
+    if(!card){
+      const setApi=SET_NAME_MAP[c.set]||c.set;
+      results=await apiSearch('name:"'+apiNaam+'" set.name:"'+setApi+'"', 5);
+      card=results.find(d=>d.number===num)||results[0]||null;
     }
  
     if(card&&card.images){
       const url=card.images.large||card.images.small;
       IMG_CACHE[c.nr]=url;
-      debugInfo.push('Gevonden: '+card.name+' ('+card.id+')');
       displayImg(wrap,url,c.naam);
     } else {
-      // Laatste poging: naam + nummer + eerste woord van set
-      const setWord=c.set.split(' ')[0];
-      const q4='name:"'+apiNaam+'" number:'+num+' set.name:*'+setWord+'*';
-      debugInfo.push('S4: '+q4);
-      results=await apiSearch(q4,5);
-      card=results[0]||null;
-      if(card&&card.images){
-        const url=card.images.large||card.images.small;
-        IMG_CACHE[c.nr]=url;
-        displayImg(wrap,url,c.naam);
-      } else {
-        wrap.innerHTML='<div class="card-img-placeholder" style="font-size:10px;color:#666;padding:8px;text-align:left;overflow:auto;max-height:220px">'+debugInfo.map(l=>'<div>'+l+'</div>').join('')+ '<div style="color:#f07070;margin-top:4px">Geen kaart gevonden - stuur link van pokemoncard.io</div></div>';
-      }
+      wrap.innerHTML='<div class="card-img-placeholder">Geen afbeelding gevonden</div>';
     }
-  } catch(e){
-    wrap.innerHTML='<div class="card-img-placeholder" style="font-size:10px;color:#f07070;padding:8px">Fout: '+e.message+'<br>'+debugInfo.join('<br>')+'</div>';
+  }catch(e){
+    wrap.innerHTML='<div class="card-img-placeholder">Fout bij laden</div>';
   }
 }
  
