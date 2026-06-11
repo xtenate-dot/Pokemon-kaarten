@@ -57,6 +57,9 @@
   .detail-name{font-size:20px;font-weight:700;color:#f0f0f0}
   .detail-sub{font-size:13px;color:#666;margin-top:3px}
   .detail-body{padding:16px}
+  .card-img-wrap{text-align:center;margin-bottom:16px;min-height:180px;display:flex;align-items:center;justify-content:center}
+  .card-img{max-width:220px;width:100%;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.5)}
+  .card-img-placeholder{width:160px;height:220px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#444;font-size:13px;margin:0 auto}
   .grade-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
   .grade-block{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;padding:12px 14px}
   .grade-lbl{font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.04em;font-weight:500}
@@ -164,6 +167,7 @@
       <div class="detail-sub" id="d-sub"></div>
     </div>
     <div class="detail-body">
+      <div class="card-img-wrap"><div class="card-img-placeholder" id="card-img-placeholder">Afbeelding laden…</div></div>
       <div class="grade-row">
         <div class="grade-block">
           <div class="grade-lbl">🤖 Holodex</div>
@@ -284,11 +288,53 @@ function cardHTML(c,valKey,rank){
   </div>`;
 }
  
+const CARD_ID_MAP={
+  1:"ex13-14",2:"swshp-SWSH260",3:"ex14-15",4:"swsh7-205",5:"swsh6-177",
+  6:"np-34",7:"si1-11",8:"dpp-DP12",9:"dpp-DP12",10:"sv1-205",
+  11:"swshp-SWSH284",12:"swsh9-TG05",13:"smp-SM208",14:"sv6-186",15:"np-6",
+  16:"dp3-19",17:"pl2-8",18:"dp2-8",19:"ex7-1",20:"sv6-187",
+  21:"np-38",22:"xy2-69",23:"base3-10",24:"dpp-DP02",25:"dp2-10",
+  26:"np-11",27:"dpp-DP18",28:"dp1-120",29:"ex1-101",30:"base1-6",
+  31:"dp2-17",32:"dp3-14",33:"ex8-110",34:"np-11",35:"sv8pt5-94",
+  36:"swsh3-20",37:"base5-28",38:"sv8-98",39:"swsh12pt5-160",40:"xy12-13",
+  41:"xy12-13",42:"xy12-13",43:"xy12-13",44:"gym2-60",45:"gym1-10",
+  46:"xy12-11",47:"xy12-11",48:"swshp-SWSH261",49:"swshp-SWSH261",50:"swshp-SWSH262",
+  51:"smp-SM247",52:"ex12-91",53:"xy6-59",54:"dp1-10",55:"ex15-60",
+  56:"ex12-19",57:"g1-RC5",58:"swshp-SWSH286",59:"cel25-SWSH144",60:"cel25-SWSH144",
+  61:"cel25-SWSH144",62:"pl4-SH11",63:"np-1",64:"np-1",65:"np-1",
+  66:"np-1",67:"np-1",68:"np-1",69:"np-1",70:"cel25-24",
+  71:"base3-50",72:"neo1-15",73:"cel25-24",74:"smp-SM108",75:"xy12-53",
+  76:"xy12-53",77:"dp1-31",78:"swsh9-TG11",79:"swsh11-138",80:"xy2-13",
+  81:"dp3-10",82:"swsh12pt5-GG40"
+};
+ 
+function loadCardImage(c){
+  const wrap=document.querySelector('.card-img-wrap');
+  if(!wrap)return;
+  wrap.innerHTML='<div class="card-img-placeholder">Laden…</div>';
+  const cardId=CARD_ID_MAP[c.nr];
+  if(!cardId){wrap.innerHTML='<div class="card-img-placeholder">Geen afbeelding</div>';return;}
+  fetch('https://api.pokemontcg.io/v2/cards/'+cardId)
+    .then(r=>r.json())
+    .then(data=>{
+      const imgUrl=data&&data.data&&data.data.images?(data.data.images.large||data.data.images.small):null;
+      if(!imgUrl){wrap.innerHTML='<div class="card-img-placeholder">Geen afbeelding gevonden</div>';return;}
+      const img=document.createElement('img');
+      img.className='card-img';
+      img.src=imgUrl;
+      img.alt=c.naam;
+      img.onload=()=>{wrap.innerHTML='';wrap.appendChild(img);};
+      img.onerror=()=>{wrap.innerHTML='<div class="card-img-placeholder">Geen afbeelding gevonden</div>';};
+    })
+    .catch(()=>{wrap.innerHTML='<div class="card-img-placeholder">Geen afbeelding gevonden</div>';});
+}
+ 
 function showDetail(nr){
   currentNr=nr;editOpen=false;
   const c=cards.find(x=>x.nr===nr);
   document.getElementById('d-naam').textContent='#'+c.nr+' '+c.naam;
   document.getElementById('d-sub').textContent=c.set+' · '+c.kaartnummer;
+  loadCardImage(c);
   const hEl=document.getElementById('d-hdx');
   hEl.textContent=c.holodex!=null?c.holodex:'—';
   hEl.style.color=c.holodex>=9?'#7fcf5a':c.holodex>=8?'#f0a830':c.holodex!=null?'#f07070':'#555';
