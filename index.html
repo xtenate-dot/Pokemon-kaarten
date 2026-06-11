@@ -367,32 +367,40 @@ function showDetail(nr){
 async function loadCardImage(c){
   const wrap=document.querySelector('.card-img-wrap');
   if(!wrap)return;
-  if(IMG_CACHE[c.nr]){
-    displayImg(wrap,IMG_CACHE[c.nr],c.naam);
-    return;
-  }
+  // Gebruik cache
+  if(IMG_CACHE[c.nr]){displayImg(wrap,IMG_CACHE[c.nr],c.naam);return;}
   wrap.innerHTML='<div class="card-img-placeholder">Laden...</div>';
   const num=c.kaartnummer.split('/')[0];
   const isPromo=c.set==='Promo';
   const setApi=SET_NAME_MAP[c.set]||c.set;
+  // Naam opschonen voor API
+  const apiNaam=c.naam
+    .replace(/Salamance/gi,'Salamence')
+    .replace(/Ho-oH/gi,'Ho-Oh')
+    .replace(/\s*&\s*/g,' ')
+    .trim();
   try{
-    let q, card=null;
+    let card=null, data;
     if(isPromo){
-      q='number:'+num+' supertype:Pokemon';
-    } else {
-      q='number:'+num+' set.name:"'+setApi+'"';
-    }
-    const r=await fetch('https://api.pokemontcg.io/v2/cards?q='+encodeURIComponent(q)+'&pageSize=10');
-    const data=await r.json();
-    if(data.data&&data.data.length>0){
-      if(isPromo){
-        const cleanN=c.naam.toLowerCase().replace(/[^a-z0-9]/g,' ').trim();
-        card=data.data.find(d=>d.name.toLowerCase().replace(/[^a-z0-9]/g,' ').trim()===cleanN)
-          ||data.data.find(d=>d.name.toLowerCase().includes(cleanN.split(' ')[0].toLowerCase()))
-          ||data.data[0];
-      } else {
-        card=data.data[0];
+      // Promo: zoek op naam + nummer
+      const q='name:"'+apiNaam+'" number:'+num;
+      const r=await fetch('https://api.pokemontcg.io/v2/cards?q='+encodeURIComponent(q)+'&pageSize=5');
+      data=await r.json();
+      if(data.data&&data.data.length>0){card=data.data[0];}
+      // Fallback: alleen op naam zoeken
+      if(!card){
+        const r2=await fetch('https://api.pokemontcg.io/v2/cards?q='+encodeURIComponent('name:"'+apiNaam+'"')+'&pageSize=20');
+        data=await r2.json();
+        if(data.data&&data.data.length>0){
+          card=data.data.find(d=>d.number===num)||data.data[0];
+        }
       }
+    } else {
+      // Normale kaart: nummer + setnaam (meest precies)
+      const q='number:'+num+' set.name:"'+setApi+'"';
+      const r=await fetch('https://api.pokemontcg.io/v2/cards?q='+encodeURIComponent(q)+'&pageSize=5');
+      data=await r.json();
+      if(data.data&&data.data.length>0){card=data.data[0];}
     }
     if(card&&card.images){
       const url=card.images.large||card.images.small;
