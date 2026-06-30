@@ -610,7 +610,7 @@ function showStats(){
 }
 
 // Laad img URL op uit localStorage cache
-const CACHE_VERSION='v7';
+const CACHE_VERSION='v8';
 function loadImgCache(){
   try{
     const v=localStorage.getItem('pkm_img_cache_ver');
@@ -702,6 +702,8 @@ function switchTab(tab){
   }
 }
 
+function goToCard(nr){showDetail(nr);switchTab('kaarten');}
+
 function buildSummary(){
   const withRaw=cards.filter(c=>c.raw!=null);
   const totalRaw=withRaw.reduce((s,c)=>s+c.raw,0);
@@ -734,10 +736,7 @@ function buildSummary(){
     '<div class="stat-big"><span class="stat-big-label">Totaal PSA-potentieel</span><span class="stat-big-val">€'+Math.round(totalPsaPotential)+'</span></div>'+
     '<div class="info-group-header" style="margin-top:16px">Top 5 meest waardevol (raw)</div>'+
     [...cards].filter(c=>c.raw).sort((a,b)=>b.raw-a.raw).slice(0,5).map(c=>
-      '<div class="stat-big" style="cursor:pointer" onclick="showDetail('+c.nr+');switchTab('kaarten')">'+
-      '<div><div style="font-size:14px;font-weight:600;color:#f0f0f0">'+c.naam+'</div>'+
-      '<div style="font-size:11px;color:#555">'+c.set+'</div></div>'+
-      '<span class="stat-big-val">€'+c.raw.toFixed(2)+'</span></div>'
+      `<div class="stat-big" style="cursor:pointer" onclick="goToCard(${c.nr})"><div><div style="font-size:14px;font-weight:600;color:#f0f0f0">${c.naam}</div><div style="font-size:11px;color:#555">${c.set}</div></div><span class="stat-big-val">€${c.raw.toFixed(2)}</span></div>`
     ).join('')+
     '<div class="info-group-header" style="margin-top:16px">Top 5 beste grading-kandidaten</div>'+
     [...cards].filter(c=>{
@@ -750,11 +749,7 @@ function buildSummary(){
     }).slice(0,5).map(c=>{
       const k=psaKey(c.holodex);
       const gain=c[k]-c.raw;
-      return '<div class="stat-big" style="cursor:pointer" onclick="showDetail('+c.nr+');switchTab('kaarten')">'+
-      '<div><div style="font-size:14px;font-weight:600;color:#f0f0f0">'+c.naam+'</div>'+
-      '<div style="font-size:11px;color:#555">HDX '+c.holodex+'</div></div>'+
-      '<div style="text-align:right"><div style="font-size:16px;font-weight:700;color:#7fcf5a">+€'+Math.round(gain)+'</div>'+
-      '<div style="font-size:11px;color:#555">€'+c[k].toFixed(2)+'</div></div></div>';
+      return `<div class="stat-big" style="cursor:pointer" onclick="goToCard(${c.nr})"><div><div style="font-size:14px;font-weight:600;color:#f0f0f0">${c.naam}</div><div style="font-size:11px;color:#555">HDX ${c.holodex}</div></div><div style="text-align:right"><div style="font-size:16px;font-weight:700;color:#7fcf5a">+€${Math.round(gain)}</div><div style="font-size:11px;color:#555">€${c[k].toFixed(2)}</div></div></div>`;
     }).join('');
 }
 </script>
