@@ -660,32 +660,44 @@ setTimeout(preloadImages, 800);
 buildSummary();
 
 function switchTab(tab){
-  // Verberg alle extra tabs en kaarten-views
-  const allViews = ['v-list','v-stats','v-detail','tab-stats','tab-uitleg','tab-grading'];
-  allViews.forEach(id=>{
-    const el=document.getElementById(id);
-    if(el) el.style.display='none';
-  });
   // Reset nav knoppen
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   
   if(tab==='kaarten'){
-    document.getElementById('v-list').style.display='block';
+    // Verberg extra tabs, toon kaarten
+    ['tab-stats','tab-uitleg','tab-grading'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.style.display='none';
+    });
+    // Herstel v-list als actief (verberg detail/stats indien open)
+    ['v-stats','v-detail'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.classList.remove('active');
+    });
     document.getElementById('v-list').classList.add('active');
     document.getElementById('nav-kaarten').classList.add('active');
-    listScrollY=listScrollY||0;
-    requestAnimationFrame(()=>window.scrollTo(0,listScrollY));
-  } else if(tab==='stats'){
-    document.getElementById('tab-stats').style.display='block';
-    document.getElementById('nav-stats').classList.add('active');
-    window.scrollTo(0,0);
-  } else if(tab==='uitleg'){
-    document.getElementById('tab-uitleg').style.display='block';
-    document.getElementById('nav-uitleg').classList.add('active');
-    window.scrollTo(0,0);
-  } else if(tab==='grading'){
-    document.getElementById('tab-grading').style.display='block';
-    document.getElementById('nav-grading').classList.add('active');
+    requestAnimationFrame(()=>window.scrollTo(0,listScrollY||0));
+  } else {
+    // Verberg alle kaarten-views
+    ['v-list','v-stats','v-detail'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.classList.remove('active');
+    });
+    // Verberg andere info-tabs
+    ['tab-stats','tab-uitleg','tab-grading'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.style.display='none';
+    });
+    if(tab==='stats'){
+      document.getElementById('tab-stats').style.display='block';
+      document.getElementById('nav-stats').classList.add('active');
+    } else if(tab==='uitleg'){
+      document.getElementById('tab-uitleg').style.display='block';
+      document.getElementById('nav-uitleg').classList.add('active');
+    } else if(tab==='grading'){
+      document.getElementById('tab-grading').style.display='block';
+      document.getElementById('nav-grading').classList.add('active');
+    }
     window.scrollTo(0,0);
   }
 }
@@ -695,10 +707,6 @@ function buildSummary(){
   const totalRaw=withRaw.reduce((s,c)=>s+c.raw,0);
   const graded=cards.filter(c=>c.holodex!=null);
   const gems=cards.filter(c=>c.holodex!=null&&c.holodex>=9);
-  
-  function psaKey(g){
-    if(g>=9.5)return'psa10';if(g>=8.5)return'psa9';if(g>=7.5)return'psa8';if(g>=6.5)return'psa7';return null;
-  }
   
   const candidates=cards.filter(c=>{
     if(!c.holodex||!c.raw)return false;
