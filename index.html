@@ -86,6 +86,35 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .stat-row-item:active{background:#222}
 .gain-val{color:#7fcf5a;font-weight:600;font-size:14px}
 .empty{text-align:center;padding:50px 0;color:#555;font-size:14px}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:#1a1a1a;border-top:1px solid #2a2a2a;display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;background:none;border:none;cursor:pointer;color:#666;font-size:10px;gap:3px;line-height:1}
+.nav-btn.active{color:#60a8e8}
+.nav-btn span{font-size:20px}
+#app{padding-bottom:60px}
+.info-view{padding:16px}
+.info-section{margin-bottom:20px}
+.info-title{font-size:18px;font-weight:700;color:#f0f0f0;margin-bottom:4px}
+.info-sub{font-size:12px;color:#555;margin-bottom:14px}
+.info-group-header{font-size:11px;font-weight:600;color:#60a8e8;text-transform:uppercase;letter-spacing:.06em;padding:12px 0 6px;border-bottom:1px solid #2a2a2a;margin-bottom:8px}
+.info-row{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid #1e1e1e}
+.info-label{font-size:13px;font-weight:500;color:#ccc;min-width:160px;flex-shrink:0}
+.info-value{font-size:13px;color:#888;flex:1}
+.info-block{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:12px 14px;margin-bottom:8px}
+.info-block-title{font-size:14px;font-weight:600;color:#f0f0f0;margin-bottom:2px}
+.info-block-sub{font-size:12px;color:#666}
+.step-row{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #1e1e1e;align-items:flex-start}
+.step-nr{width:24px;height:24px;border-radius:12px;background:#1a5fa0;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-content{flex:1}
+.step-title{font-size:14px;font-weight:600;color:#f0f0f0}
+.step-desc{font-size:12px;color:#666;margin-top:3px;line-height:1.5}
+.stat-big{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.stat-big-label{font-size:13px;color:#888}
+.stat-big-val{font-size:18px;font-weight:700;color:#f0f0f0}
+.grading-card{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:12px;padding:14px;margin-bottom:10px}
+.grading-card-title{font-size:15px;font-weight:700;color:#f0f0f0;margin-bottom:10px}
+.grading-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #222}
+.grading-key{font-size:12px;color:#888}
+.grading-val{font-size:12px;color:#ccc;text-align:right;max-width:60%}
 </style>
 </head>
 <body>
@@ -196,6 +225,103 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="cancel-note" onclick="toggleEdit()">Annuleren</div>
     </div>
   </div>
+</div>
+
+<!-- Navigatie -->
+<div class="bottom-nav">
+  <button class="nav-btn active" id="nav-kaarten" onclick="switchTab('kaarten')"><span>🃏</span>Kaarten</button>
+  <button class="nav-btn" id="nav-stats" onclick="switchTab('stats')"><span>📊</span>Samenvatting</button>
+  <button class="nav-btn" id="nav-uitleg" onclick="switchTab('uitleg')"><span>📖</span>Uitleg</button>
+  <button class="nav-btn" id="nav-grading" onclick="switchTab('grading')"><span>🏆</span>Grading</button>
+</div>
+
+<!-- Samenvatting tab -->
+<div id="tab-stats" style="display:none" class="info-view">
+  <div class="info-title">📊 Samenvatting</div>
+  <div class="info-sub">Automatisch berekend op basis van je kaarten</div>
+  <div id="summary-content"></div>
+</div>
+
+<!-- Uitleg tab -->
+<div id="tab-uitleg" style="display:none" class="info-view">
+  <div class="info-title">📖 Uitleg & Bronnen</div>
+  <div class="info-sub">Wat betekenen de termen in de app?</div>
+  <div class="info-group-header">Conditie</div>
+  <div class="info-row"><span class="info-label">Gem Mint</span><span class="info-value">Perfecte kaart, geen enkel gebrek</span></div>
+  <div class="info-row"><span class="info-label">Near Mint (NM)</span><span class="info-value">Vrijwel perfect, kleine fabrieksimperfecties ok</span></div>
+  <div class="info-row"><span class="info-label">Lightly Played (LP)</span><span class="info-value">Kleine zichtbare slijtage aan randen/hoeken</span></div>
+  <div class="info-row"><span class="info-label">Moderately Played (MP)</span><span class="info-value">Duidelijke slijtage maar nog presentabel</span></div>
+  <div class="info-row"><span class="info-label">Heavily Played (HP)</span><span class="info-value">Veel slijtage, krassen, whitening</span></div>
+  <div class="info-row"><span class="info-label">Damaged</span><span class="info-value">Gekreukt, gescheurd of zwaar beschadigd</span></div>
+  <div class="info-group-header" style="margin-top:16px">Holodex Grade</div>
+  <div class="info-row"><span class="info-label">Holodex.gg</span><span class="info-value">Upload foto's van je kaart voor een AI-grade voorspelling</span></div>
+  <div class="info-row"><span class="info-label">Hoe interpreteren?</span><span class="info-value">Geeft een inschatting van PSA/BGS grade op basis van conditie. Gebruik als richtlijn, niet als garantie.</span></div>
+  <div class="info-row"><span class="info-label">Grade ≥ 9.5</span><span class="info-value">Verwacht PSA 10</span></div>
+  <div class="info-row"><span class="info-label">Grade 8.5 – 9.4</span><span class="info-value">Verwacht PSA 9</span></div>
+  <div class="info-row"><span class="info-label">Grade 7.5 – 8.4</span><span class="info-value">Verwacht PSA 8</span></div>
+  <div class="info-row"><span class="info-label">Grade 6.5 – 7.4</span><span class="info-value">Verwacht PSA 7</span></div>
+  <div class="info-group-header" style="margin-top:16px">Bronnen</div>
+  <div class="info-row"><span class="info-label">Prijzen</span><span class="info-value">PriceCharting.com — actuele marktprijzen</span></div>
+  <div class="info-row"><span class="info-label">Grade voorspelling</span><span class="info-value">Holodex.gg — AI-gebaseerde grade inschatting</span></div>
+  <div class="info-row"><span class="info-label">Kaartafbeeldingen</span><span class="info-value">Pokémon TCG API (pokemontcg.io)</span></div>
+</div>
+
+<!-- Grading tab -->
+<div id="tab-grading" style="display:none" class="info-view">
+  <div class="info-title">🏆 Grading Bedrijven</div>
+  <div class="info-sub">Vergelijking & kosten | All-in incl. verzending vanuit NL</div>
+
+  <div class="grading-card">
+    <div class="grading-card-title">🥇 PSA — Professional Sports Authenticator</div>
+    <div class="grading-row"><span class="grading-key">Marktaandeel</span><span class="grading-val">~72% (marktleider)</span></div>
+    <div class="grading-row"><span class="grading-key">Schaal</span><span class="grading-val">1 – 10</span></div>
+    <div class="grading-row"><span class="grading-key">Top grade</span><span class="grading-val">PSA 10 Gem Mint</span></div>
+    <div class="grading-row"><span class="grading-key">Subgrades</span><span class="grading-val">Nee</span></div>
+    <div class="grading-row"><span class="grading-key">All-in kosten (NL)</span><span class="grading-val">~€50/kaart (grading ~€30 + verzending + douane)</span></div>
+    <div class="grading-row"><span class="grading-key">Marktwaarde vs PSA 10</span><span class="grading-val">100% (referentie)</span></div>
+    <div class="grading-row"><span class="grading-key">Website</span><span class="grading-val">psacard.com</span></div>
+  </div>
+
+  <div class="grading-card">
+    <div class="grading-card-title">🥈 CGC — Certified Guaranty Company</div>
+    <div class="grading-row"><span class="grading-key">Marktaandeel</span><span class="grading-val">~15%, sterk groeiend</span></div>
+    <div class="grading-row"><span class="grading-key">Schaal</span><span class="grading-val">1 – 10 (met halve punten)</span></div>
+    <div class="grading-row"><span class="grading-key">Top grade</span><span class="grading-val">CGC 10 Pristine</span></div>
+    <div class="grading-row"><span class="grading-key">Subgrades</span><span class="grading-val">Ja (centering, hoeken, randen, oppervlak)</span></div>
+    <div class="grading-row"><span class="grading-key">All-in kosten (NL)</span><span class="grading-val">~€30/kaart</span></div>
+    <div class="grading-row"><span class="grading-key">Marktwaarde vs PSA 10</span><span class="grading-val">~70-85% van PSA 10-prijs</span></div>
+    <div class="grading-row"><span class="grading-key">Website</span><span class="grading-val">cgccards.com</span></div>
+  </div>
+
+  <div class="grading-card">
+    <div class="grading-card-title">🥉 BGS — Beckett Grading Services</div>
+    <div class="grading-row"><span class="grading-key">Schaal</span><span class="grading-val">1 – 10 (met halve punten)</span></div>
+    <div class="grading-row"><span class="grading-key">Top grade</span><span class="grading-val">BGS 10 Black Label (alle subgrades 10)</span></div>
+    <div class="grading-row"><span class="grading-key">Subgrades</span><span class="grading-val">Ja — centering, hoeken, randen, oppervlak</span></div>
+    <div class="grading-row"><span class="grading-key">All-in kosten (NL)</span><span class="grading-val">~€30/kaart</span></div>
+    <div class="grading-row"><span class="grading-key">Marktwaarde vs PSA 10</span><span class="grading-val">BGS 9.5 = ~78-88% | BGS 9 = ~60-75%</span></div>
+    <div class="grading-row"><span class="grading-key">Bijzonder</span><span class="grading-val">Black Label geldt als prestigieuzer dan PSA 10</span></div>
+    <div class="grading-row"><span class="grading-key">Website</span><span class="grading-val">beckett.com/grading</span></div>
+  </div>
+
+  <div class="grading-card">
+    <div class="grading-card-title">🤖 TAG — Tech Authentication & Grading</div>
+    <div class="grading-row"><span class="grading-key">Bijzonder</span><span class="grading-val">AI-gebaseerde grading (1000-puntsschaal)</span></div>
+    <div class="grading-row"><span class="grading-key">Top grade</span><span class="grading-val">TAG 10</span></div>
+    <div class="grading-row"><span class="grading-key">All-in kosten (NL)</span><span class="grading-val">~€20/kaart (goedkoopste optie)</span></div>
+    <div class="grading-row"><span class="grading-key">Marktwaarde vs PSA 10</span><span class="grading-val">~50-65% (nog opkomend)</span></div>
+    <div class="grading-row"><span class="grading-key">Website</span><span class="grading-val">taggrading.com</span></div>
+  </div>
+
+  <div class="info-group-header">PSA Opsturen — Stappenplan</div>
+  <div class="step-row"><div class="step-nr">1</div><div class="step-content"><div class="step-title">Controleer je kaarten</div><div class="step-desc">Leg elke kaart onder goed licht. Controleer hoeken, randen, oppervlak en centering. Maak foto's van voor- en achterkant als bewijs.</div></div></div>
+  <div class="step-row"><div class="step-nr">2</div><div class="step-content"><div class="step-title">Selecteer kaarten die lonen</div><div class="step-desc">Gebruik de Samenvatting-tab om te checken of de PSA-meerwaarde de kosten dekt (~€50 all-in). Stuur alleen kaarten op waarvan de winst dit overstijgt.</div></div></div>
+  <div class="step-row"><div class="step-nr">3</div><div class="step-content"><div class="step-title">Account aanmaken bij PSA</div><div class="step-desc">Ga naar psacard.com en maak een gratis account aan. PSA Basic is gratis, hogere tiers geven korting per kaart.</div></div></div>
+  <div class="step-row"><div class="step-nr">4</div><div class="step-content"><div class="step-title">Penny sleeves</div><div class="step-desc">Stop elke kaart eerst in een dunne penny sleeve. Zorg dat er geen luchtbellen in de sleeve zitten.</div></div></div>
+  <div class="step-row"><div class="step-nr">5</div><div class="step-content"><div class="step-title">Semi-rigid hoesjes (Card Saver)</div><div class="step-desc">Doe de kaart (in sleeve) in een Card Saver of toploader. Geen permanente tape op de kaart zelf.</div></div></div>
+  <div class="step-row"><div class="step-nr">6</div><div class="step-content"><div class="step-title">Label elke kaart</div><div class="step-desc">Schrijf je stikkernummer op een papiertje en stop dit erbij. Zo weet je na terugkomst welke PSA-slab bij welk nummer hoort.</div></div></div>
+  <div class="step-row"><div class="step-nr">7</div><div class="step-content"><div class="step-title">Bubblewrap + stevige doos</div><div class="step-desc">Wikkel het stapeltje toploaders in bubblewrap. Kaarten mogen niet kunnen schuiven of stoten in de doos.</div></div></div>
+  <div class="step-row"><div class="step-nr">8</div><div class="step-content"><div class="step-title">Verzekerd versturen</div><div class="step-desc">Gebruik een tracked & insured verzendservice. Verzeker voor de totale kaartwaarde. Bewaar het track & trace nummer.</div></div></div>
 </div>
 
 </div>
@@ -332,9 +458,16 @@ function goBack(){
 }
 
 function showView(id){
+  // Verberg extra tabs
+  ['tab-stats','tab-uitleg','tab-grading'].forEach(t=>{
+    const el=document.getElementById(t);
+    if(el) el.style.display='none';
+  });
   if(id==='v-list'){
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
     document.getElementById(id).classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById('nav-kaarten').classList.add('active');
     requestAnimationFrame(()=>window.scrollTo(0,listScrollY));
   } else {
     if(document.getElementById('v-list').classList.contains('active')){listScrollY=window.scrollY;}
@@ -524,6 +657,98 @@ loadImgCache();
 populateSetFilter();
 applyFilters();
 setTimeout(preloadImages, 800);
+buildSummary();
+
+function switchTab(tab){
+  // Verberg alle extra tabs en kaarten-views
+  const allViews = ['v-list','v-stats','v-detail','tab-stats','tab-uitleg','tab-grading'];
+  allViews.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display='none';
+  });
+  // Reset nav knoppen
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  
+  if(tab==='kaarten'){
+    document.getElementById('v-list').style.display='block';
+    document.getElementById('v-list').classList.add('active');
+    document.getElementById('nav-kaarten').classList.add('active');
+    listScrollY=listScrollY||0;
+    requestAnimationFrame(()=>window.scrollTo(0,listScrollY));
+  } else if(tab==='stats'){
+    document.getElementById('tab-stats').style.display='block';
+    document.getElementById('nav-stats').classList.add('active');
+    window.scrollTo(0,0);
+  } else if(tab==='uitleg'){
+    document.getElementById('tab-uitleg').style.display='block';
+    document.getElementById('nav-uitleg').classList.add('active');
+    window.scrollTo(0,0);
+  } else if(tab==='grading'){
+    document.getElementById('tab-grading').style.display='block';
+    document.getElementById('nav-grading').classList.add('active');
+    window.scrollTo(0,0);
+  }
+}
+
+function buildSummary(){
+  const withRaw=cards.filter(c=>c.raw!=null);
+  const totalRaw=withRaw.reduce((s,c)=>s+c.raw,0);
+  const graded=cards.filter(c=>c.holodex!=null);
+  const gems=cards.filter(c=>c.holodex!=null&&c.holodex>=9);
+  
+  function psaKey(g){
+    if(g>=9.5)return'psa10';if(g>=8.5)return'psa9';if(g>=7.5)return'psa8';if(g>=6.5)return'psa7';return null;
+  }
+  
+  const candidates=cards.filter(c=>{
+    if(!c.holodex||!c.raw)return false;
+    const k=psaKey(c.holodex);
+    if(!k)return false;
+    const v=c[k];
+    if(!v)return false;
+    return (v-c.raw)>18;
+  });
+  
+  const totalPsaPotential=graded.reduce((s,c)=>{
+    const k=psaKey(c.holodex);
+    if(!k||!c[k])return s;
+    return s+c[k];
+  },0);
+
+  const el=document.getElementById('summary-content');
+  el.innerHTML=
+    '<div class="info-group-header">Algemeen</div>'+
+    '<div class="stat-big"><span class="stat-big-label">Totaal kaarten</span><span class="stat-big-val">'+cards.length+'</span></div>'+
+    '<div class="stat-big"><span class="stat-big-label">Met Holodex grade</span><span class="stat-big-val">'+graded.length+'</span></div>'+
+    '<div class="stat-big"><span class="stat-big-label">Gems (HDX 9+)</span><span class="stat-big-val">'+gems.length+'</span></div>'+
+    '<div class="stat-big"><span class="stat-big-label">Totale raw waarde</span><span class="stat-big-val">€'+Math.round(totalRaw)+'</span></div>'+
+    '<div class="stat-big"><span class="stat-big-label">Lonen om te graden</span><span class="stat-big-val">'+candidates.length+' kaarten</span></div>'+
+    '<div class="stat-big"><span class="stat-big-label">Totaal PSA-potentieel</span><span class="stat-big-val">€'+Math.round(totalPsaPotential)+'</span></div>'+
+    '<div class="info-group-header" style="margin-top:16px">Top 5 meest waardevol (raw)</div>'+
+    [...cards].filter(c=>c.raw).sort((a,b)=>b.raw-a.raw).slice(0,5).map(c=>
+      '<div class="stat-big" style="cursor:pointer" onclick="showDetail('+c.nr+');switchTab('kaarten')">'+
+      '<div><div style="font-size:14px;font-weight:600;color:#f0f0f0">'+c.naam+'</div>'+
+      '<div style="font-size:11px;color:#555">'+c.set+'</div></div>'+
+      '<span class="stat-big-val">€'+c.raw.toFixed(2)+'</span></div>'
+    ).join('')+
+    '<div class="info-group-header" style="margin-top:16px">Top 5 beste grading-kandidaten</div>'+
+    [...cards].filter(c=>{
+      if(!c.holodex||!c.raw)return false;
+      const k=psaKey(c.holodex);
+      return k&&c[k]&&(c[k]-c.raw)>18;
+    }).sort((a,b)=>{
+      const ka=psaKey(a.holodex),kb=psaKey(b.holodex);
+      return (b[kb]-b.raw)-(a[ka]-a.raw);
+    }).slice(0,5).map(c=>{
+      const k=psaKey(c.holodex);
+      const gain=c[k]-c.raw;
+      return '<div class="stat-big" style="cursor:pointer" onclick="showDetail('+c.nr+');switchTab('kaarten')">'+
+      '<div><div style="font-size:14px;font-weight:600;color:#f0f0f0">'+c.naam+'</div>'+
+      '<div style="font-size:11px;color:#555">HDX '+c.holodex+'</div></div>'+
+      '<div style="text-align:right"><div style="font-size:16px;font-weight:700;color:#7fcf5a">+€'+Math.round(gain)+'</div>'+
+      '<div style="font-size:11px;color:#555">€'+c[k].toFixed(2)+'</div></div></div>';
+    }).join('');
+}
 </script>
 </body>
 </html>
